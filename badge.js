@@ -1,80 +1,82 @@
 /* BADGE FUNCTIONS */
-// Because chrome doesn't support per-window badges, we maintain it per-tab
+// Because browser doesn't support per-window badges, we maintain it per-tab
 // and update it on both window and tab selection changes
 
-
 // used to count how many times we show the update message
-var updateMsgCount = restoreFromLocalStorage("updateMsgCount", 0);
-
+var updateMsgCount = restoreFromLocalStorage('updateMsgCount', 0)
 
 // if the extension has been updated, show the update message 5 times
 if (!localStorage.version) {
-  localStorage.version = "1.3";
+  localStorage.version = '1.3'
 }
 if (parseFloat(localStorage.version) < 1.3) {
-  updateMsgCount = 5;
-  localStorage.version = "1.3";
+  updateMsgCount = 5
+  localStorage.version = '1.3'
 }
 if (updateMsgCount > 0) {
-  updateBadgeForAllWindows();
+  updateBadgeForAllWindows()
 }
-
 
 // updates the browserAction badge to show the window as saved
 function showSavedBadge(tabId, w) {
-  var text;
+  var text
   if (updateMsgCount > 0) {
-    text = "new!";
+    text = 'new!'
   } else {
-    text = "" + w.tabs.length;
+    text = '' + w.tabs.length
   }
-  chrome.browserAction.setBadgeText({text:text, tabId:tabId});
-  chrome.browserAction.setBadgeBackgroundColor(
-    {color:[0,255,0,255], tabId:tabId});
+  chrome.browserAction.setBadgeText({text: text, tabId: tabId})
+  chrome.browserAction.setBadgeBackgroundColor({
+    color: [0, 255, 0, 255],
+    tabId: tabId
+  })
 }
-
 
 // updates the browserAction badge to show the window as unsaved
-// because chrome doesn't support per-window badges, we do it per-tab
+// because browser doesn't support per-window badges, we do it per-tab
 // and update it on both window and tab selection changes
 function showUnsavedBadge(tabId) {
-  var text;
+  var text
   if (updateMsgCount > 0) {
-    text = "new!";
+    text = 'new!'
   } else {
-    text = "";
+    text = ''
   }
-  chrome.browserAction.setBadgeText({text:text, tabId:tabId});
-  chrome.browserAction.setBadgeBackgroundColor(
-    {color:[102,170,255,255], tabId:tabId});
+  chrome.browserAction.setBadgeText({text: text, tabId: tabId})
+  chrome.browserAction.setBadgeBackgroundColor({
+    color: [102, 170, 255, 255],
+    tabId: tabId
+  })
 }
-
 
 // update the badge for the given tab
 function updateBadgeForTab(tab) {
-  var windowName = windowIdToName[tab.windowId];
+  var windowName = windowIdToName[tab.windowId]
   if (windowName) {
     var w = savedWindows[windowName]
-    showSavedBadge(tab.id, w);
+    showSavedBadge(tab.id, w)
   } else {
-    showUnsavedBadge(tab.id);
+    showUnsavedBadge(tab.id)
   }
 }
-
 
 // update the badge for the given window
 function updateBadgeForWindow(windowId) {
   if (windowId != -1) {
-    chrome.tabs.getSelected(windowId, updateBadgeForTab);
+    chrome.tabs.query({windowId: windowId, active: true}, function(tabs) {
+      var tab = tabs[0]
+      if (tab) {
+        updateBadgeForTab(tab)
+      }
+    })
   }
 }
-
 
 // update the badge for the given window
 function updateBadgeForAllWindows() {
   chrome.windows.getAll(null, function(windows) {
     for (i in windows) {
-      updateBadgeForWindow(windows[i].id);
+      updateBadgeForWindow(windows[i].id)
     }
-  });
+  })
 }

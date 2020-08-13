@@ -1,9 +1,10 @@
 // helper function to restore from localStorage
 function restoreFromLocalStorage(key, defaultValue) {
-  if (localStorage[key]) {
-    return JSON.parse(localStorage[key]);
+  var value = localStorage.getItem(key)
+  if (value) {
+    return JSON.parse(value)
   } else {
-    localStorage[key] = JSON.stringify(defaultValue);
-    return defaultValue;
+    localStorage.setItem(key, JSON.stringify(defaultValue))
+    return defaultValue
   }
 }

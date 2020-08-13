@@ -1,9 +1,9 @@
 {
+  "id": "simple-window-saver",
   "name": "Simple Window Saver",
-  "version": "1.4",
+  "version": "1.5",
   "description": "Save and restore windows.",
   "manifest_version": 2,
-  "content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self'",
   "icons": { "16": "icon16.png",
              "48": "icon48.png",
              "128": "icon128.png" },
@@ -20,8 +20,7 @@
       "localStorage.js",
       "eventHandlers.js",
       "badge.js",
-      "background.js",
-      "debug.js"
+      "background.js"
     ]
   },
   "permissions": [
