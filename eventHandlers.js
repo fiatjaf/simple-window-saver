@@ -1,3 +1,5 @@
+/* global chrome, tabIdToSavedWindowId, isWindowClosing, updateBadgeForTab, windowIdToName, storeWindow, savedWindows, closedWindows, windowsAreEqual, markWindowAsClosed, markWindowAsOpen */
+
 /* TAB EVENTS */
 // For most tab events, we simply resave the entire window.
 // While more wasteful, this makes the code much more robust.
@@ -57,11 +59,11 @@ function onTabChanged(tabId, windowId) {
       storeWindow(browserWindow, name, displayName)
     } else {
       // otherwise we double check that it's not saved
-      for (i in closedWindows) {
+      for (let i in closedWindows) {
         var savedWindow = closedWindows[i]
         if (windowsAreEqual(browserWindow, savedWindow)) {
-          var name = savedWindow.name
-          var displayName = savedWindow.displayName
+          name = savedWindow.name
+          displayName = savedWindow.displayName
           storeWindow(browserWindow, name, displayName)
           markWindowAsOpen(browserWindow)
         }

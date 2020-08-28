@@ -1,3 +1,4 @@
+/* global browser, restoreFromLocalStorage, chrome, updateBadgeForWindow */
 /*
 
 The background page is responsible for the following:
@@ -14,29 +15,29 @@ var DEFAULT_NAME = 'Window'
 
 /* BASIC STATE */
 // an array of the names of all saved windows
-var savedWindowNames = restoreFromLocalStorage('savedWindowNames', new Array())
+var savedWindowNames = restoreFromLocalStorage('savedWindowNames', [])
 
 // saved windows, keyed by name
 // If the savedWindow has an id, it is currently open.
 // Each savedWindow can only correspond to one open window at any given time.
-var savedWindows = new Object()
+var savedWindows = {}
 
 // map the ids of open windows to saved window names
 // used to respond to events
-var windowIdToName = new Object()
+var windowIdToName = {}
 
 /* EDGE CASES */
 // saved windows that aren't currently open, keyed by name
 // used to match new windows to saved windows that are still closed
-var closedWindows = new Object()
+var closedWindows = {}
 
 // Unfortunately, removing a tab doesn't give us a windowId
 // so we need to keep track of that mapping.
-var tabIdToSavedWindowId = new Object()
+var tabIdToSavedWindowId = {}
 
 // object that stores per-window flags as to whether API indicated
 // window-closing intention on tab removal
-var isWindowClosing = new Object()
+var isWindowClosing = {}
 
 /* INIT */
 
@@ -90,7 +91,7 @@ function windowsAreEqual(browserWindow, savedWindow) {
     return false
   }
   for (var i in savedWindow.tabs) {
-    if (browserWindow.tabs[i].url != savedWindow.tabs[i].url) {
+    if (browserWindow.tabs[i].url !== savedWindow.tabs[i].url) {
       return false
     }
   }
@@ -100,7 +101,7 @@ function windowsAreEqual(browserWindow, savedWindow) {
 // save a window
 // returns the saved window object
 function saveWindow(browserWindow, displayName) {
-  var displayName = displayName == '' ? DEFAULT_NAME : displayName
+  displayName = displayName === '' ? DEFAULT_NAME : displayName
   // handle duplicate names
   var name = displayName
   var n = 0
@@ -149,30 +150,58 @@ function markWindowAsClosed(savedWindow) {
 }
 
 // restore a previously saved window
-function openWindow(name) {
-  chrome.tabs.query({active: true}, function(tabs) {
-    var tab = tabs[0]
+async function openWindow(name) {
+  // if the window was opened from a new tab, close the new tab
+  let tab = (await browser.tabs.query({active: true}))[0]
+  if (tab && tab.url.split(':')[0] === 'about') {
+    browser.tabs.remove(tab.id)
+  }
 
-    // if the window was opened from a new tab, close the new tab
-    if (tab && (tab.url == 'about:newtab' || tab.url == 'about:blank')) {
-      chrome.tabs.remove(tab.id)
-    }
+  let savedWindow = savedWindows[name]
+  let {top, left, width, height, incognito, tabs} = savedWindow
 
-    // compile the raw list of urls
-    var savedWindow = savedWindows[name]
-    var urls = []
-    for (i in savedWindow.tabs) {
-      var url = savedWindow.tabs[i].url
-      if (url.split(':')[0] === 'about') continue
-      urls[i] = url
-    }
-
-    // create a window and open the tabs in it.
-    var createData = {url: urls}
-    chrome.windows.create(createData, function(browserWindow) {
-      onWindowOpened(savedWindow, browserWindow)
-    })
+  // create the window
+  let newWindow = await browser.windows.create({
+    top,
+    left,
+    width,
+    height,
+    incognito
   })
+
+  // open the tabs in it
+  for (let i in tabs) {
+    let {url, active, cookieStoreId, pinned} = tabs[i]
+    let urlPrefix = url.split(':')[0]
+    switch (urlPrefix) {
+      case 'chrome':
+      case 'javascript':
+      case 'data':
+      case 'file':
+        continue
+    }
+    switch (url) {
+      case 'about:config':
+      case 'about:addons':
+      case 'about:debugging':
+        continue
+      case 'about:newtab':
+        url = ''
+    }
+
+    await browser.tabs.create({
+      url,
+      active,
+      cookieStoreId,
+      pinned,
+      windowId: newWindow.id
+    })
+  }
+
+  // delete default tabs from the new window
+  browser.tabs.remove(newWindow.tabs.map(tab => tab.id))
+
+  onWindowOpened(savedWindow, newWindow)
 }
 
 // mark a window as opened and pin tabs if necessary

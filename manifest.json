@@ -1,7 +1,7 @@
 {
   "id": "simple-window-saver",
   "name": "Simple Window Saver",
-  "version": "1.5",
+  "version": "1.6",
   "description": "Save and restore windows.",
   "manifest_version": 2,
   "icons": { "16": "icon16.png",
@@ -24,6 +24,7 @@
     ]
   },
   "permissions": [
-    "tabs"
+    "tabs",
+    "cookies"
   ]
 }

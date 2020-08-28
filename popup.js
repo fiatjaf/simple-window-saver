@@ -1,9 +1,11 @@
+/* global chrome */
+
 // FEATURE: support drag & drop re-ordering
 // FEATURE: support drag & drop merging
 
 var backgroundPage = chrome.extension.getBackgroundPage()
 var savedWindowListEl, formEl, nameInput, template
-var undo = new Object()
+var undo = {}
 
 function init() {
   // initialize variables we'll need
@@ -71,7 +73,7 @@ function appendWindowToList(savedWindow, currentWindowName) {
 
   var count = savedWindow.tabs.length
   var text = savedWindow.displayName + ' (' + count + ')'
-  if (savedWindow.name == currentWindowName) {
+  if (savedWindow.name === currentWindowName) {
     li.className = 'current'
     text = 'This is <b>' + text + '</b>.'
   } else if (savedWindow.id) {
@@ -93,7 +95,10 @@ function saveWindow(event) {
   chrome.windows.getCurrent(function(currentWindow) {
     chrome.tabs.query({currentWindow: true}, function(tabs) {
       currentWindow.tabs = tabs
-      savedWindow = backgroundPage.saveWindow(currentWindow, nameInput.value)
+      let savedWindow = backgroundPage.saveWindow(
+        currentWindow,
+        nameInput.value
+      )
       formEl.style.display = 'none'
       appendWindowToList(savedWindow, nameInput.value)
     })
