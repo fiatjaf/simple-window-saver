@@ -1,3 +1,5 @@
+/* globals chrome, restoreFromLocalStorage, windowIdToName, savedWindows */
+
 /* BADGE FUNCTIONS */
 // Because browser doesn't support per-window badges, we maintain it per-tab
 // and update it on both window and tab selection changes
@@ -62,8 +64,8 @@ function updateBadgeForTab(tab) {
 
 // update the badge for the given window
 function updateBadgeForWindow(windowId) {
-  if (windowId != -1) {
-    chrome.tabs.query({windowId: windowId, active: true}, function(tabs) {
+  if (windowId !== -1) {
+    chrome.tabs.query({windowId: windowId, active: true}, function (tabs) {
       var tab = tabs[0]
       if (tab) {
         updateBadgeForTab(tab)
@@ -74,8 +76,8 @@ function updateBadgeForWindow(windowId) {
 
 // update the badge for the given window
 function updateBadgeForAllWindows() {
-  chrome.windows.getAll(null, function(windows) {
-    for (i in windows) {
+  chrome.windows.getAll(null, function (windows) {
+    for (let i in windows) {
       updateBadgeForWindow(windows[i].id)
     }
   })
